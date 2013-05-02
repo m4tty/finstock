@@ -1,0 +1,21 @@
+{
+  "name": "finstock",
+  "version": "0.1.0",
+  "description": "hysterix based graphs backed by graphite",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": "",
+  "keywords": [
+    "graphs",
+    "graphite",
+    "monitoring",
+    ""
+  ],
+  "author": "matt self",
+  "license": "MIT",
+  "dependencies": {
+    "express": "~3.2.1"
+  }
+}

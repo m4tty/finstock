@@ -1,0 +1,42 @@
+
+
+
+{
+data: {
+	"name": "someName",
+	"type": "type",
+	"group": "group",
+	"isCircuitBreakerOpen":false,
+	"errorPercentage": 10,
+	"requestCount":231,
+	"rollingCountCollapsedRequests":1,
+	"rollingCountExceptionsThrown":1,
+	"rollingCountFailure":1,
+	"rollingCountFallbackFailure":1,
+	"rollingCountFallbackRejection":1,
+	"rollingCountFallbackSuccess":1,
+	"rollingCountResponsesFromCache":1,
+	"rollingCountSemaphoreRejected":1,
+	"rollingCountShortCircuited":1,
+	"rollingCountSuccess":1,
+	"rollingCountThreadPoolRejected":1,
+	"rollingCountTimeout":1,
+	"currentConcurrentExecutionCount":1,
+	"latencyExecute_mean":100,
+	"latencyExecute":200,
+	"latencyTotal_mean":300,
+	"latencyTotal":400,
+	"propertyValue_circuitBreakerRequestVolumeThreshold":1,
+	"propertyValue_circuitBreakerSleepWindowInMilliseconds":1,
+	"propertyValue_circuitBreakerErrorThresholdPercentage":1,
+	"propertyValue_circuitBreakerForceOpen":1,
+	"propertyValue_executionIsolationStrategy":1,
+	"propertyValue_executionIsolationThreadTimeoutInMilliseconds":1,
+	"propertyValue_executionIsolationThreadInterruptOnTimeout":1,
+	"propertyValue_executionIsolationSemaphoreMaxConcurrentRequests":1,
+	"propertyValue_fallbackIsolationSemaphoreMaxConcurrentRequests":1,
+	"propertyValue_requestCacheEnabled":1,
+	"propertyValue_requestLogEnabled":1,
+	"propertyValue_metricsRollingStatisticalWindowInMilliseconds":1
+	}
+}
