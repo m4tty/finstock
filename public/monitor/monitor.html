@@ -7,13 +7,13 @@
 
 	<!-- Setup base for everything -->
 	<link rel="stylesheet" type="text/css" href="../css/global.css" />
-	
+
 	<!-- Our custom CSS -->
 	<link rel="stylesheet" type="text/css" href="./monitor.css" />
 
 	<!-- d3 -->
 	<script type="text/javascript" src="../js/d3.v2.min.js"></script>
-	
+
 	<!-- underscore -->
 	<script type="text/javascript" src="../js/underscore-min.js"></script>
 
@@ -22,14 +22,17 @@
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
 	<script type="text/javascript" src="../js/jquery.tinysort.min.js"></script>
 	<script type="text/javascript" src="../js/tmpl.js"></script>
-	
+
 	<!-- HystrixCommand -->
 	<script type="text/javascript" src="../components/hystrixCommand/hystrixCommand.js"></script>
 	<link rel="stylesheet" type="text/css" href="../components/hystrixCommand/hystrixCommand.css" />
 
 	<!--graphite data -->
 	<script type="text/javascript" src="../components/data/graphiteData.js"></script>
-	
+
+
+	<!--config data -->
+	<script type="text/javascript" src="../config/graphsConfig.js"></script>
 </head>
 <body>
 	<!--
@@ -44,16 +47,16 @@
 				Dashboard
 				</div>
 				<div class="menu_actions">
-					Sort: 
+					Sort:
 					<a href="javascript://" onclick="hystrixMonitor.sortByErrorThenVolume();">Error then Volume</a> |
-					<a href="javascript://" onclick="hystrixMonitor.sortAlphabetically();">Alphabetical</a> | 
-					<a href="javascript://" onclick="hystrixMonitor.sortByVolume();">Volume</a> | 
-					<a href="javascript://" onclick="hystrixMonitor.sortByError();">Error</a> | 
-					<a href="javascript://" onclick="hystrixMonitor.sortByLatencyMean();">Mean</a> | 
-					<a href="javascript://" onclick="hystrixMonitor.sortByLatencyMedian();">Median</a> | 
-					<a href="javascript://" onclick="hystrixMonitor.sortByLatency90();">90</a> | 
-					<a href="javascript://" onclick="hystrixMonitor.sortByLatency99();">99</a> | 
-					<a href="javascript://" onclick="hystrixMonitor.sortByLatency995();">99.5</a> 
+					<a href="javascript://" onclick="hystrixMonitor.sortAlphabetically();">Alphabetical</a> |
+					<a href="javascript://" onclick="hystrixMonitor.sortByVolume();">Volume</a> |
+					<a href="javascript://" onclick="hystrixMonitor.sortByError();">Error</a> |
+					<a href="javascript://" onclick="hystrixMonitor.sortByLatencyMean();">Mean</a> |
+					<a href="javascript://" onclick="hystrixMonitor.sortByLatencyMedian();">Median</a> |
+					<a href="javascript://" onclick="hystrixMonitor.sortByLatency90();">90</a> |
+					<a href="javascript://" onclick="hystrixMonitor.sortByLatency99();">99</a> |
+					<a href="javascript://" onclick="hystrixMonitor.sortByLatency995();">99.5</a>
 				</div>
 				<div class="menu_legend">
 					<span class="success">Success</span> | <span class="latent">Latent</span> | <span class="shortCircuited">Short-Circuited</span> | <span class="timeout">Timeout</span> | <span class="rejected">Rejected</span> | <span class="failure">Failure</span> | <span class="errorPercentage">Error %</span>
@@ -61,11 +64,11 @@
 			</div>
 		</div>
 		<div id="dependencies" class="row dependencies"><span class="loading">Loading ...</span></div>
-		
+
 		<div class="spacer"></div>
 		<div class="spacer"></div>
-		
-		
+
+
 	</div>
 
 
@@ -73,16 +76,17 @@
 <script>
 		/**
 		 * Queue up the monitor to start once the page has finished loading.
-		 * 
+		 *
 		 * This is an inline script and expects to execute once on page load.
-		 */ 
-		 
+		 */
+
 		 // commands
 		var hystrixMonitor = new HystrixCommandMonitor('dependencies', {includeDetailIcon:false});
-		
-		var graphiteDataSvc = new GraphiteDataServices();
-		
-				
+
+		var graphiteDataSvc = new GraphiteDataServices(finstock.config);
+
+		document.title = finstock.config.title;
+
 		$(window).load(function() { // within load with a setTimeout to prevent the infinite spinner
 			setTimeout(function() {
 				//if(commandStream == undefined) {
@@ -92,27 +96,41 @@
 				//} else {
 					// sort by error+volume by default
 					hystrixMonitor.sortByErrorThenVolume();
-					
-					
 
-					setInterval(function() { 
-							graphiteDataSvc.getRawData('test',function(err, data) {
-													console.log(data);
-													graphiteDataSvc.formatForHystrix(data, function(err, formattedData) {
-														console.log(formattedData);
+					function bindDisplayData(display) {
+						return (function() {
+							var graphite_url = display.graphiteHost +
+							"/render/?target=" + display.target +
+							"&target=" + display.target_mean +
+							"&target=" + display.target_median +
+							"&target=" + display.target_count +
+							"&target=" + display.target_upper +
+							"&target=" + display.target_lower +
+							"&target=" + display.target_std +
+							"&format=json&from=-40s";
+							if (display.target_hosts != "") {
+								graphite_url + "&target=" + display.target_hosts;
+							}
 
-						hystrixMonitor.eventSourceMessageListener(formattedData);
-													});
-												});
+								graphiteDataSvc.getRawData(graphite_url,function(err, data) {
 
-
+									//console.log(display);
+									graphiteDataSvc.formatForHystrix(display, data, function(err, formattedData) {
+										hystrixMonitor.eventSourceMessageListener(formattedData);
+									});
+								});
+						})();
+					}
+					setInterval(function() {
+						for (var i = finstock.config.displays.length - 1; i >= 0; i--) {
+							bindDisplayData(finstock.config.displays[i]);
+						};
 					},2000);
 					//setInterval(function() { hystrixMonitor.eventSourceMessageListener(fakeData2);},2000);
-		
 			},0);
 		});
-		
-	
+
+
 		//Read a page's GET URL variables and return them as an associative array.
 		// from: http://jquery-howto.blogspot.com/2009/09/get-url-parameters-values-with-jquery.html
 		function getUrlVars()
@@ -127,7 +145,7 @@
 		    }
 		    return vars;
 		}
-		
+
 	</script>
 
 
