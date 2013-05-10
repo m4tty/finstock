@@ -103,9 +103,12 @@
 		 * We want to do this on any numerical values where we want per instance rather than cluster-wide sum.
 		 */
 		function converAllAvg(data) {
-			convertAvg(data, "errorPercentage", true);
-			convertAvg(data, "latencyExecute_mean", false);
-			convertAvg(data, "latencyTotal_mean", false);
+			data["errorPercentage"] = roundNumber(data["errorPercentage"]);
+			data["latencyExecute_mean"] = Math.floor(data["latencyExecute_mean"]);
+			data["latencyTotal_mean"] = Math.floor(data["latencyTotal_mean"]);
+			// convertAvg(data, "errorPercentage", true);
+			// convertAvg(data, "latencyExecute_mean", false);
+			// convertAvg(data, "latencyTotal_mean", false);
 
 			// the following will break when it becomes a compound string if the property is dynamically changed
 			convertAvg(data, "propertyValue_metricsRollingStatisticalWindowInMilliseconds", false);
@@ -199,6 +202,11 @@
 				log("Failed preProcessData: " + err.message);
 				return;
 			}
+			data.rollingCountSuccess = keepRolling(data.name, "rollingCountSuccess", data.rollingCountSuccess, data.rollingFlushInterval);
+			data.rollingCountFailure = keepRolling(data.name, "rollingCountFailure", data.rollingCountFailure, data.rollingFlushInterval);
+			data.rollingCountShortCircuited = keepRolling(data.name, "rollingCountShortCircuited", data.rollingCountShortCircuited, data.rollingFlushInterval);
+			data.rollingCountThreadPoolRejected = keepRolling(data.name, "rollingCountThreadPoolRejected", data.rollingCountThreadPoolRejected, data.rollingFlushInterval);
+			data.rollingCountTimeout = keepRolling(data.name, "rollingCountTimeout", data.rollingCountTimeout, data.rollingFlushInterval);
 
 			// add the 'addCommas' function to the 'data' object so the HTML templates can use it
 			data.addCommas = addCommas;
@@ -234,6 +242,9 @@
 
 			// now update/insert the data
 			$('#CIRCUIT_' + data.name + ' div.monitor_data').html(tmpl(hystrixTemplateCircuit, data));
+
+
+
 
 			var ratePerSecond = data.ratePerSecond;
 			var ratePerSecondPerHost = data.ratePerSecondPerHost;
@@ -273,7 +284,35 @@
 			return resultAsString;
 		};
 
+		var rollingCounts = {};
+		var rollingLastUpdate = {};
+		function keepRolling(circuitName, itemName, count, flushInterval) {
+			if (!flushInterval) {
+				flushInterval = 10;
+			}
+			var shouldUpdate = false;
 
+			var currentCount = rollingCounts[circuitName + "." + itemName];
+			var lastUpdate = rollingLastUpdate[circuitName + "." + itemName];
+			var now = new Date();
+			if (!lastUpdate) {
+				lastUpdate = 1;
+			}
+			if (lastUpdate && (now.getTime() > (lastUpdate + (flushInterval * 1000)))) {
+				shouldUpdate = true;
+			}
+
+			if (shouldUpdate) {
+				if (currentCount) {
+					rollingCounts[circuitName + "." + itemName] += count;
+				} else {
+					rollingCounts[circuitName + "." + itemName] = count;
+				}
+				rollingLastUpdate[circuitName + "." + itemName] = now.getTime();
+			}
+
+			return rollingCounts[circuitName + "." + itemName];
+		};
 
 
 		/* private */ function updateCircle(variablePrefix, cssTarget, rate, errorPercentage) {

@@ -59,7 +59,7 @@
 					<a href="javascript://" onclick="hystrixMonitor.sortByLatency995();">99.5</a>
 				</div>
 				<div class="menu_legend">
-					<span class="success">Success</span> | <span class="latent">Latent</span> | <span class="shortCircuited">Short-Circuited</span> | <span class="timeout">Timeout</span> | <span class="rejected">Rejected</span> | <span class="failure">Failure</span> | <span class="errorPercentage">Error %</span>
+					<span class="success">Success</span> | <span class="shortCircuited">Blue</span> | <span class="timeout">400s</span> | <span class="rejected">Rejected</span> | <span class="failure">Failure</span> | <span class="errorPercentage">Error %</span>
 				</div>
 			</div>
 		</div>
@@ -81,11 +81,21 @@
 		 */
 
 		 // commands
-		var hystrixMonitor = new HystrixCommandMonitor('dependencies', {includeDetailIcon:false});
+		var hystrixMonitor = new HystrixCommandMonitor('dependencies', {includeDetailIcon:true});
 
 		var graphiteDataSvc = new GraphiteDataServices(finstock.config);
 
 		document.title = finstock.config.title;
+		// document.getElementById("successKeyLabel").innerHTML = finstock.config.blueLabel;
+		// document.getElementById("successKeyLabel").innerHTML = finstock.config.blueLabel;
+		// document.getElementById("successKeyLabel").innerHTML = finstock.config.blueLabel;
+		// document.getElementById("successKeyLabel").innerHTML = finstock.config.blueLabel;
+		// document.getElementById("successKeyLabel").innerHTML = finstock.config.blueLabel;
+		// document.getElementById("successKeyLabel").innerHTML = finstock.config.blueLabel;
+
+
+		var count_flush_interval = finstock.config.counters_rollup_interval_seconds;
+		//TODO: change the color key
 
 		$(window).load(function() { // within load with a setTimeout to prevent the infinite spinner
 			setTimeout(function() {
@@ -100,18 +110,43 @@
 					function bindDisplayData(display) {
 						return (function() {
 							var graphite_url = display.graphiteHost +
-							"/render/?target=" + display.target +
+							"/render/?target=" + display.target_primary_count +
 							"&target=" + display.target_mean +
 							"&target=" + display.target_median +
 							"&target=" + display.target_count +
 							"&target=" + display.target_upper +
 							"&target=" + display.target_lower +
 							"&target=" + display.target_std +
-							"&format=json&from=-40s";
-							if (display.target_hosts != "") {
-								graphite_url + "&target=" + display.target_hosts;
+							"&format=json";
+
+							if (display.target_green_count) {
+								graphite_url +="&target=" + display.target_green_count;
 							}
 
+							if (display.target_red_count) {
+								graphite_url +="&target=" + display.target_red_count;
+							}
+							if (display.target_blue_count) {
+								graphite_url +="&target=" + display.target_blue_count;
+							}
+							if (display.target_orange_count) {
+								graphite_url +="&target=" + display.target_orange_count;
+							}
+							if (display.target_purple_count) {
+								graphite_url +="&target=" + display.target_purple_count;
+							}
+							if (display.from && display.from != "") {
+								graphite_url += "&from=-" + display.from;
+							} else {
+								graphite_url += "&from=-40s";
+							}
+
+							if (display.target_hosts != "") {
+								graphite_url += "&target=" + display.target_hosts;
+							}
+
+							display.detailUrl = graphite_url.replace("&format=json&from=-40s","");
+							display.rollingFlushInterval = count_flush_interval;
 								graphiteDataSvc.getRawData(graphite_url,function(err, data) {
 
 									//console.log(display);
